@@ -1,0 +1,65 @@
+tags/SConscript:    'BaseTags', 'BaseSetAssoc', 'SectorTags', 'CompressedTags', 'FALRU'])
+tags/Tags.py:class FALRU(BaseTags):
+tags/Tags.py:    type = 'FALRU'
+tags/Tags.py:    cxx_class = 'gem5::FALRU'
+tags/fa_lru.cc:FALRUBlk::print() const
+tags/fa_lru.cc:FALRU::FALRU(const Params &p)
+tags/fa_lru.cc:    blks = new FALRUBlk[numBlocks];
+tags/fa_lru.cc:FALRU::~FALRU()
+tags/fa_lru.cc:FALRU::tagsInit()
+tags/fa_lru.cc:FALRU::invalidate(CacheBlk *blk)
+tags/fa_lru.cc:    moveToTail((FALRUBlk*)blk);
+tags/fa_lru.cc:FALRU::accessBlock(const PacketPtr pkt, Cycles &lat)
+tags/fa_lru.cc:FALRU::accessBlock(const PacketPtr pkt, Cycles &lat,
+tags/fa_lru.cc:    FALRUBlk* blk =
+tags/fa_lru.cc:        static_cast<FALRUBlk*>(findBlock(pkt->getAddr(), pkt->isSecure()));
+tags/fa_lru.cc:FALRU::findBlock(Addr addr, bool is_secure) const
+tags/fa_lru.cc:    FALRUBlk* blk = nullptr;
+tags/fa_lru.cc:FALRU::findBlockBySetAndWay(int set, int way) const
+tags/fa_lru.cc:FALRU::findVictim(Addr addr, const bool is_secure, const std::size_t size,
+tags/fa_lru.cc:    // The victim is always stored on the tail for the FALRU
+tags/fa_lru.cc:    FALRUBlk* victim = tail;
+tags/fa_lru.cc:FALRU::insertBlock(const PacketPtr pkt, CacheBlk *blk)
+tags/fa_lru.cc:    FALRUBlk* falruBlk = static_cast<FALRUBlk*>(blk);
+tags/fa_lru.cc:FALRU::moveBlock(CacheBlk *src_blk, CacheBlk *dest_blk)
+tags/fa_lru.cc:    panic("Moving blocks in FALRU has not been implemented");
+tags/fa_lru.cc:FALRU::moveToHead(FALRUBlk *blk)
+tags/fa_lru.cc:FALRU::moveToTail(FALRUBlk *blk)
+tags/fa_lru.cc:FALRU::CacheTracking::CacheTracking(unsigned min_size, unsigned max_size,
+tags/fa_lru.cc:FALRU::CacheTracking::check(const FALRUBlk *head, const FALRUBlk *tail) const
+tags/fa_lru.cc:#ifdef FALRU_DEBUG
+tags/fa_lru.cc:    const FALRUBlk* blk = head;
+tags/fa_lru.cc:#endif // FALRU_DEBUG
+tags/fa_lru.cc:FALRU::CacheTracking::init(FALRUBlk *head, FALRUBlk *tail)
+tags/fa_lru.cc:    FALRUBlk* blk = numTrackedCaches ? head : nullptr;
+tags/fa_lru.cc:FALRU::CacheTracking::moveBlockToHead(FALRUBlk *blk)
+tags/fa_lru.cc:FALRU::CacheTracking::moveBlockToTail(FALRUBlk *blk)
+tags/fa_lru.cc:FALRU::CacheTracking::recordAccess(FALRUBlk *blk)
+tags/fa_lru.hh:#include "params/FALRU.hh"
+tags/fa_lru.hh:// Uncomment to enable sanity checks for the FALRU cache and the
+tags/fa_lru.hh://#define FALRU_DEBUG
+tags/fa_lru.hh:class FALRUBlk : public CacheBlk
+tags/fa_lru.hh:    FALRUBlk() : CacheBlk(), prev(nullptr), next(nullptr), inCachesMask(0) {}
+tags/fa_lru.hh:    FALRUBlk *prev;
+tags/fa_lru.hh:    FALRUBlk *next;
+tags/fa_lru.hh:class FALRU : public BaseTags
+tags/fa_lru.hh:    typedef FALRUBlk BlkType;
+tags/fa_lru.hh:    FALRUBlk *blks;
+tags/fa_lru.hh:    FALRUBlk *head;
+tags/fa_lru.hh:    FALRUBlk *tail;
+tags/fa_lru.hh:    typedef std::unordered_map<TagHashKey, FALRUBlk *, PairHash> TagHash;
+tags/fa_lru.hh:    void moveToHead(FALRUBlk *blk);
+tags/fa_lru.hh:    void moveToTail(FALRUBlk *blk);
+tags/fa_lru.hh:    typedef FALRUParams Params;
+tags/fa_lru.hh:    FALRU(const Params &p);
+tags/fa_lru.hh:    ~FALRU();
+tags/fa_lru.hh:     * Initialize blocks as FALRUBlk instances.
+tags/fa_lru.hh:        void init(FALRUBlk *head, FALRUBlk *tail);
+tags/fa_lru.hh:        void moveBlockToHead(FALRUBlk *blk);
+tags/fa_lru.hh:        void moveBlockToTail(FALRUBlk *blk);
+tags/fa_lru.hh:        void recordAccess(FALRUBlk *blk);
+tags/fa_lru.hh:        void check(const FALRUBlk *head, const FALRUBlk *tail) const;
+tags/fa_lru.hh:        std::vector<FALRUBlk*> boundaries;
+tags/fa_lru.hh:         * @defgroup FALRUStats Fully Associative LRU specific statistics
+Binary file .swp matches
+grep: input file ‘dump’ is also the output
