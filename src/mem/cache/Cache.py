@@ -107,9 +107,13 @@ class BaseCache(ClockedObject):
 
     prefetcher = Param.BasePrefetcher(NULL, "Prefetcher attached to cache")
 
-    tags = Param.BaseTags(ShepherdSetAssoc(), "Tag store")
+    # tags = Param.BaseTags(ShepherdSetAssoc(), "Tag store")
+    # replacement_policy = Param.BaseReplacementPolicy(
+    #     SHEPHERDRP(), "Replacement policy"
+    # )
+    tags = Param.BaseTags(BaseSetAssoc(), "Tag store")
     replacement_policy = Param.BaseReplacementPolicy(
-        SHEPHERDRP(), "Replacement policy"
+        LRURP(), "Replacement policy"
     )
     partitioning_manager = Param.PartitionManager(
         NULL, "Cache partitioning manager"

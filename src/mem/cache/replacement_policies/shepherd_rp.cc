@@ -122,7 +122,7 @@ SHEPHERD::getVictimMainCache(const ReplacementCandidates& candidates) const
 ReplaceableEntry*
 SHEPHERD::getVictim(const ReplacementCandidates& candidates) const
 {
-    std::cout << "get victim called\n";
+    // std::cout << "<=================== get victim called ===================>\n";
     // victim is the block where the new data will be stored.
     // so the algorithm is like this.
     // <-->

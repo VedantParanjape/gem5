@@ -84,9 +84,10 @@ ShepherdSetAssoc::tagsInit()
 
         // Associate a replacement data entry to the block
         // SC associativity = 4
-        int shephard_cache_assoc = 4;
-        // TODO: parameterize SC associativity
-        assert(shephard_cache_assoc < getWayAllocationMax());
+        int shephard_cache_assoc = getWayAllocationMax() / 4;
+        if (shephard_cache_assoc == 0)
+            shephard_cache_assoc = 1;
+
         // We set the first shephard_cache_assoc ways to be SC
         // and the remaining ones are MC
         bool isShepherdCacheWay = blk->getWay() < shephard_cache_assoc ? true : false;
