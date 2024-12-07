@@ -110,9 +110,6 @@ class BaseCache(ClockedObject):
     # replacement_policy = Param.BaseReplacementPolicy(
     #     LRURP(), "Replacement policy"
     # )
-    partitioning_manager = Param.PartitionManager(
-        NULL, "Cache partitioning manager"
-    )
 
     compressor = Param.BaseCacheCompressor(NULL, "Cache compressor.")
     replace_expansions = Param.Bool(True, "Apply replacement policy to " \

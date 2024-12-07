@@ -103,11 +103,6 @@ ShepherdSetAssoc::tagsInit()
 void
 ShepherdSetAssoc::invalidate(CacheBlk *blk)
 {
-    // Notify partitioning policies of release of ownership
-    if (partitionManager) {
-        partitionManager->notifyRelease(blk->getPartitionId());
-    }
-
     BaseTags::invalidate(blk);
 
     // Decrease the number of tags in use
