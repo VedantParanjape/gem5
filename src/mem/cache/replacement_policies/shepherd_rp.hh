@@ -36,7 +36,8 @@
 #define __MEM_CACHE_REPLACEMENT_POLICIES_SHEPHERD_RP_HH__
 
 #include "mem/cache/replacement_policies/base.hh"
-
+#include <queue>
+#include <algorithm>
 namespace gem5
 {
 
@@ -50,16 +51,51 @@ class SHEPHERD : public Base
     /** LRU-specific implementation of replacement data. */
     struct SHEPHERDReplData : ReplacementData
     {
+        int sc_associativity;
+        // set index where this data is there
+        // can be used to update the next_value_counter
+        int set_index;
+        // MC is using LRU, so we implement LRU in that
+        Tick lastTouchTick;
+        // Tick on which the entry was inserted
+        Tick tickInserted;
         // SC flag, to see if the line is main cache or shepherd cache
         bool shepherd_cache_flag;
         // implement sc-ptr
-
+        // Count value matrix
+        std::vector<int> count_value_matrix;
+        // allocate next value counter as a set
+        static std::vector<std::vector<int>> next_value_counter;
         /**
          * Default constructor. Invalidate data.
          */
-        SHEPHERDReplData() : shepherd_cache_flag(false) {}
-        SHEPHERDReplData(bool flag) : shepherd_cache_flag(flag) {} 
+        SHEPHERDReplData() : shepherd_cache_flag(false), sc_associativity(0), lastTouchTick(0), tickInserted(0) {}
+        SHEPHERDReplData(bool flag, int sc_assoc, int num_sets, int index_set) : shepherd_cache_flag(flag), sc_associativity(sc_assoc), set_index(index_set), lastTouchTick(0), tickInserted(0) {
+          // resize the array to shepherd cache associativity
+          count_value_matrix.resize(sc_assoc);
+          // set the count value matrix rows to e by default, here -1 is e
+          std::fill(count_value_matrix.begin(), count_value_matrix.end(), -1);
+          // resize the next value counter only once
+          if (next_value_counter.size() != num_sets) {
+            next_value_counter.resize(num_sets);
+            for (int i = 0; i < num_sets; i++) {
+              next_value_counter[i].resize(sc_assoc);
+              // set the initial value of next value counter to -1
+              std::fill(next_value_counter[i].begin(), next_value_counter[i].end(), -1);
+            }
+          }
+        }
+
+        void update_set_index(int s) {
+        }
     };
+
+  private:
+    /**
+     * A counter that tracks the number of
+     * ticks since being created to avoid a tie
+     */
+    mutable Tick timeTicks;
 
   public:
     typedef SHEPHERDRPParams Params;
@@ -102,6 +138,7 @@ class SHEPHERD : public Base
     ReplaceableEntry* getVictim(const ReplacementCandidates& candidates) const
                                                                      override;
 
+    ReplaceableEntry* getVictimMainCache(const ReplacementCandidates& candidates) const;
     /**
      * Instantiate a replacement data entry.
      *
@@ -113,9 +150,10 @@ class SHEPHERD : public Base
      * Instantiate a replacement data entry.
      *
      * @param Shepherd Cache flag
+     * @param Shepherd Cache associativity
      * @return A shared pointer to the new replacement data.
      */
-    std::shared_ptr<ReplacementData> instantiateEntry(bool flag);
+    std::shared_ptr<ReplacementData> instantiateEntry(bool flag, int sc_assoc, int num_set, int index_set);
 
 };
 
