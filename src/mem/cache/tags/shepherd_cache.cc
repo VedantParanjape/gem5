@@ -70,6 +70,7 @@ ShepherdSetAssoc::ShepherdSetAssoc(const Params &p)
 void
 ShepherdSetAssoc::tagsInit()
 {
+    int num_sets = std::ceil(numBlocks / allocAssoc);
     // Initialize all blocks
     for (unsigned blk_index = 0; blk_index < numBlocks; blk_index++) {
         // Locate next cache block
@@ -91,8 +92,10 @@ ShepherdSetAssoc::tagsInit()
         bool isShepherdCacheWay =
             blk->getWay() < shephard_cache_assoc ? true : false;
         blk->replacementData = static_cast<
-            gem5::replacement_policy::SHEPHERD*>(replacementPolicy)->
-            instantiateEntry(isShepherdCacheWay);
+            gem5::replacement_policy::SHEPHERD*>(replacementPolicy)
+                ->instantiateEntry(isShepherdCacheWay,
+                    shephard_cache_assoc, num_sets,
+                    blk->getSet());
     }
 }
 

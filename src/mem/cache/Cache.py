@@ -102,9 +102,13 @@ class BaseCache(ClockedObject):
     prefetch_on_pf_hit = Param.Bool(False,
         "Notify the hardware prefetcher on hit on prefetched lines")
 
-    tags = Param.BaseTags(BaseSetAssoc(), "Tag store")
-    replacement_policy = Param.BaseReplacementPolicy(LRURP(),
-        "Replacement policy")
+    tags = Param.BaseTags(ShepherdSetAssoc(), "Tag store")
+    replacement_policy = Param.BaseReplacementPolicy(
+        SHEPHERDRP(), "Replacement policy"
+    )
+    partitioning_manager = Param.PartitionManager(
+        NULL, "Cache partitioning manager"
+    )
 
     compressor = Param.BaseCacheCompressor(NULL, "Cache compressor.")
     replace_expansions = Param.Bool(True, "Apply replacement policy to " \
