@@ -65,6 +65,8 @@ BaseIndexingPolicy::BaseIndexingPolicy(const Params &p)
              "of 2");
     fatal_if(assoc <= 0, "associativity must be greater than zero");
 
+    std::cout << "ip set: " << numSets << "\n";
+
     // Make space for the entries
     for (uint32_t i = 0; i < numSets; ++i) {
         sets[i].resize(assoc);

@@ -45,6 +45,7 @@
 
 #include "mem/cache/tags/shepherd_cache.hh"
 
+#include <iostream>
 #include <string>
 
 #include "base/intmath.hh"
@@ -65,12 +66,15 @@ ShepherdSetAssoc::ShepherdSetAssoc(const Params &p)
     if (blkSize < 4 || !isPowerOf2(blkSize)) {
         fatal("Block size must be at least 4 and a power of 2");
     }
+
+    std::cout << "<=== shepherd cache init ===>\n";
 }
 
 void
 ShepherdSetAssoc::tagsInit()
 {
     int num_sets = std::ceil(numBlocks / allocAssoc);
+    std::cout << "sc set: " << num_sets << "\n";
     // Initialize all blocks
     for (unsigned blk_index = 0; blk_index < numBlocks; blk_index++) {
         // Locate next cache block
@@ -92,11 +96,12 @@ ShepherdSetAssoc::tagsInit()
         // and the remaining ones are MC
         bool isShepherdCacheWay =
             blk->getWay() < shephard_cache_assoc ? true : false;
-        blk->replacementData = static_cast<
-            gem5::replacement_policy::SHEPHERD*>(replacementPolicy)
-                ->instantiateEntry(isShepherdCacheWay,
-                    shephard_cache_assoc, num_sets,
-                    blk->getSet());
+
+        blk->replacementData = replacementPolicy->instantiateEntry();
+        std::static_pointer_cast<
+            gem5::replacement_policy::SHEPHERD::SHEPHERDReplData>
+                (blk->replacementData)->update_data(isShepherdCacheWay,
+                    shephard_cache_assoc, num_sets, blk->getSet());
     }
 }
 

@@ -65,8 +65,8 @@ class LFURP(BaseReplacementPolicy):
 
 
 class SHEPHERDRP(BaseReplacementPolicy):
-    type = "SHEPHERDRP"
-    cxx_class = "gem5::replacement_policy::SHEPHERD"
+    type = 'SHEPHERDRP'
+    cxx_class = 'gem5::replacement_policy::SHEPHERD'
     cxx_header = "mem/cache/replacement_policies/shepherd_rp.hh"
 
 class LRURP(BaseReplacementPolicy):

@@ -49,7 +49,7 @@ namespace replacement_policy
 {
 class SHEPHERD : public Base
 {
-  protected:
+  public:
     /** LRU-specific implementation of replacement data. */
     struct SHEPHERDReplData : ReplacementData
     {
@@ -59,7 +59,7 @@ class SHEPHERD : public Base
         int set_index;
         // MC is using LRU, so we implement LRU in that
         Tick lastTouchTick;
-        // Tick on which the entry was inserted
+        // Tick on which the entry was inserted for FIFO
         Tick tickInserted;
         // SC flag, to see if the line is main cache or shepherd cache
         bool shepherd_cache_flag;
@@ -73,10 +73,9 @@ class SHEPHERD : public Base
          */
         SHEPHERDReplData() : shepherd_cache_flag(false),
             sc_associativity(0), lastTouchTick(0), tickInserted(0) {}
-        SHEPHERDReplData(bool flag, int sc_assoc, int num_sets,
-            int index_set) : shepherd_cache_flag(flag),
-              sc_associativity(sc_assoc), set_index(index_set),
-              lastTouchTick(0), tickInserted(0) {
+
+        void update_data(bool flag, int sc_assoc,
+            int num_sets, int index_set) {
           // resize the array to shepherd cache associativity
           count_value_matrix.resize(sc_assoc);
           // set the count value matrix rows to e by default, here -1 is e
@@ -91,9 +90,9 @@ class SHEPHERD : public Base
                 next_value_counter[i].end(), -1);
             }
           }
-        }
 
-        void update_set_index(int s) {
+          // Update the index of the set
+          set_index = index_set;
         }
     };
 
@@ -153,17 +152,6 @@ class SHEPHERD : public Base
      * @return A shared pointer to the new replacement data.
      */
     std::shared_ptr<ReplacementData> instantiateEntry() override;
-
-    /**
-     * Instantiate a replacement data entry.
-     *
-     * @param Shepherd Cache flag
-     * @param Shepherd Cache associativity
-     * @return A shared pointer to the new replacement data.
-     */
-    std::shared_ptr<ReplacementData> instantiateEntry(
-      bool flag, int sc_assoc, int num_set, int index_set);
-
 };
 
 } // namespace replacement_policy

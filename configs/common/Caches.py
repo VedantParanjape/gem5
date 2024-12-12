@@ -37,7 +37,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from m5.objects.ReplacementPolicies import *
 from m5.defines import buildEnv
+from m5.objects.Tags import *
 from m5.objects import *
 
 # Base implementations of L1, L2, IO and TLB-walker caches. There are
@@ -70,6 +72,12 @@ class L2Cache(Cache):
     mshrs = 20
     tgts_per_mshr = 12
     write_buffers = 8
+
+    # set the shepherd cache for L2 cache
+    tags = Param.BaseTags(ShepherdSetAssoc(), "Tag store")
+    replacement_policy = Param.BaseReplacementPolicy(
+        SHEPHERDRP(), "Replacement policy"
+    )
 
 class IOCache(Cache):
     assoc = 8

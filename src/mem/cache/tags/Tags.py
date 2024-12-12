@@ -86,9 +86,9 @@ class BaseSetAssoc(BaseTags):
     )
 
 class ShepherdSetAssoc(BaseTags):
-    type = "ShepherdSetAssoc"
+    type = 'ShepherdSetAssoc'
     cxx_header = "mem/cache/tags/shepherd_cache.hh"
-    cxx_class = "gem5::ShepherdSetAssoc"
+    cxx_class = 'gem5::ShepherdSetAssoc'
 
     # Get the cache associativity
     assoc = Param.Int(Parent.assoc, "associativity")

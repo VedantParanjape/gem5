@@ -233,6 +233,12 @@ class ShepherdSetAssoc : public BaseTags
         return indexingPolicy->regenerateAddr(blk->getTag(), blk);
     }
 
+    void forEachBlk(std::function<void(CacheBlk &)> visitor) override {
+        for (CacheBlk& blk : blks) {
+            visitor(blk);
+        }
+    }
+
     bool anyBlk(std::function<bool(CacheBlk &)> visitor) override {
         for (CacheBlk& blk : blks) {
             if (visitor(blk)) {
