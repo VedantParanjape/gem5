@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <queue>
 
+#include "mem/cache/cache_blk.hh"
 #include "mem/cache/replacement_policies/base.hh"
 
 namespace gem5
@@ -63,6 +64,8 @@ class SHEPHERD : public Base
         Tick tickInserted;
         // SC flag, to see if the line is main cache or shepherd cache
         bool shepherd_cache_flag;
+        // SC way id
+        int shephard_cache_id;
         // implement sc-ptr
         // Count value matrix
         std::vector<int> count_value_matrix;
@@ -72,10 +75,11 @@ class SHEPHERD : public Base
          * Default constructor. Invalidate data.
          */
         SHEPHERDReplData() : shepherd_cache_flag(false),
-            sc_associativity(0), lastTouchTick(0), tickInserted(0) {}
+            sc_associativity(0), lastTouchTick(0), tickInserted(0),
+            shephard_cache_id(-1) {}
 
         void update_data(bool flag, int sc_assoc,
-            int num_sets, int index_set) {
+            int num_sets, int index_set, int index_way) {
           // resize the array to shepherd cache associativity
           count_value_matrix.resize(sc_assoc);
           // set the count value matrix rows to e by default, here -1 is e
@@ -93,6 +97,10 @@ class SHEPHERD : public Base
 
           // Update the index of the set
           set_index = index_set;
+          sc_associativity = sc_assoc;
+          shepherd_cache_flag = flag;
+          if (flag)
+            shephard_cache_id = index_way;
         }
     };
 

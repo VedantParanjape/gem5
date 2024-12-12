@@ -51,13 +51,20 @@ void
 SHEPHERD::invalidate(const std::shared_ptr<ReplacementData>& replacement_data)
 {
     // Reset last touch timestamp
-    if (!std::static_pointer_cast<SHEPHERDReplData>(replacement_data)
+    if (std::static_pointer_cast<SHEPHERDReplData>(replacement_data)
             ->shepherd_cache_flag)
         std::static_pointer_cast<SHEPHERDReplData>(
-            replacement_data)->lastTouchTick = Tick(0);
-    else
-        std::static_pointer_cast<SHEPHERDReplData>(
             replacement_data)->tickInserted = 0;
+
+    std::static_pointer_cast<SHEPHERDReplData>(
+        replacement_data)->lastTouchTick = 0;
+
+    auto sc_repl_data =
+        std::static_pointer_cast<SHEPHERDReplData>(replacement_data);
+    for (int i = 0; i < sc_repl_data->count_value_matrix.size(); i++) {
+        std::static_pointer_cast<SHEPHERDReplData>(replacement_data)
+            ->count_value_matrix[i] = -1;
+    }
 }
 
 void
@@ -79,8 +86,8 @@ SHEPHERD::touch(const std::shared_ptr<ReplacementData>& replacement_data) const
     auto sc_repl_data =
         std::static_pointer_cast<SHEPHERDReplData>(replacement_data);
 
+    int s_index = sc_repl_data->set_index;
     for (int i = 0; i < sc_repl_data->count_value_matrix.size(); i++) {
-        int s_index = sc_repl_data->set_index;
         // if nvc = -1, the column is not allocated, thus skip.
         if (sc_repl_data->next_value_counter[s_index][i] == -1)
             continue;
@@ -90,10 +97,13 @@ SHEPHERD::touch(const std::shared_ptr<ReplacementData>& replacement_data) const
         if (sc_repl_data->count_value_matrix[i] != -1)
             continue;
 
-        sc_repl_data->count_value_matrix[i] =
-            sc_repl_data->next_value_counter[s_index][i]++;
+        std::static_pointer_cast<SHEPHERDReplData>(replacement_data)
+            ->count_value_matrix[i] =
+                std::static_pointer_cast<SHEPHERDReplData>(replacement_data)
+                    ->next_value_counter[s_index][i];
+        std::static_pointer_cast<SHEPHERDReplData>(replacement_data)
+            ->next_value_counter[s_index][i]++;
     }
-
     // Update last touch timestamp
     std::static_pointer_cast<SHEPHERDReplData>(
         replacement_data)->lastTouchTick = curTick();
@@ -141,14 +151,30 @@ SHEPHERD::getVictim(const ReplacementCandidates& candidates) const
     // There must be at least one replacement candidate
     assert(candidates.size() > 0);
 
+    // [Step 0]
+    // Build a vector of indexes that are SC/MC way to easily
+    // iterate over them.
+    std::vector<int> sc_way_indexes;
+    std::vector<int> mc_way_indexes;
+    for (int i = 0; i < candidates.size(); i++) {
+        if (std::static_pointer_cast<SHEPHERDReplData>
+                (candidates[i]->replacementData)->shepherd_cache_flag)
+            sc_way_indexes.push_back(i);
+        else
+            mc_way_indexes.push_back(i);
+    }
+
     // [Step 1]
     // Visit all SC candidates to find victim. The victim is found
     // using FIFO order.
     int sc_assoc = std::static_pointer_cast<SHEPHERDReplData>(
         candidates[0]->replacementData)->sc_associativity;
-    ReplaceableEntry* sc_victim = candidates[0];
-    int sc_victim_index = 0;
-    for (int i = 0; i < sc_assoc && i < candidates.size(); i++) {
+    ReplaceableEntry* sc_victim = candidates[sc_way_indexes[0]];
+    int sc_victim_index = sc_way_indexes[0];
+    int sc_victim_id = std::static_pointer_cast<SHEPHERDReplData>
+        (candidates[sc_way_indexes[0]]->replacementData)
+            ->shephard_cache_id;
+    for (auto i: sc_way_indexes) {
         // Update victim entry if necessary
         if (std::static_pointer_cast<SHEPHERDReplData>(
                     candidates[i]->replacementData)->tickInserted <
@@ -156,6 +182,9 @@ SHEPHERD::getVictim(const ReplacementCandidates& candidates) const
                     sc_victim->replacementData)->tickInserted) {
             sc_victim = candidates[i];
             sc_victim_index = i;
+            sc_victim_id = std::static_pointer_cast<SHEPHERDReplData>
+                (candidates[i]->replacementData)
+                    ->shephard_cache_id;
         }
     }
 
@@ -170,7 +199,7 @@ SHEPHERD::getVictim(const ReplacementCandidates& candidates) const
         std::cout << "<====== set index don't match ======>\n";
 
     int nvc = sc_victim_repl_data->
-        next_value_counter[sc_set][sc_victim_index];
+        next_value_counter[sc_set][sc_victim_id];
 
     // if nvc == -1, it means we got a block that has never been
     // allocated before. This should ideally happen only at a cold
@@ -185,9 +214,9 @@ SHEPHERD::getVictim(const ReplacementCandidates& candidates) const
     // move on.
     if (nvc == -1) {
         sc_victim_repl_data->
-            next_value_counter[sc_set][sc_victim_index] = 0;
+            next_value_counter[sc_set][sc_victim_id] = 0;
         for (int i = 0; i < sc_assoc; i++) {
-            if (i == sc_victim_index)
+            if (i == sc_victim_id)
                 continue;
 
             sc_victim_repl_data->count_value_matrix[i] = 0;
@@ -196,7 +225,7 @@ SHEPHERD::getVictim(const ReplacementCandidates& candidates) const
         for (int i = 0; i < candidates.size(); i++) {
             std::static_pointer_cast<SHEPHERDReplData>(
                 candidates[i]->replacementData)->
-                    count_value_matrix[sc_victim_index] = -1;
+                    count_value_matrix[sc_victim_id] = -1;
         }
 
         return sc_victim;
@@ -219,18 +248,19 @@ SHEPHERD::getVictim(const ReplacementCandidates& candidates) const
     // candidates and hence should not be used.
     bool all_imminence_order_set = true;
     ReplacementCandidates narrowed_candidates;
-    for (int i = sc_assoc - 1; i < candidates.size(); i++) {
+    for (auto i: mc_way_indexes) {
         if (std::static_pointer_cast<SHEPHERDReplData>(
                 candidates[i]->replacementData)->
-                    count_value_matrix[sc_victim_index] == -1) {
+                    count_value_matrix[sc_victim_id] == -1) {
             narrowed_candidates.push_back(candidates[i]);
             all_imminence_order_set = false;
         }
     }
     // Check if the imminence order for self SC entry is set or not.
-    int sc_victim_imminence_order = std::static_pointer_cast<SHEPHERDReplData>(
-            sc_victim->replacementData)->
-                count_value_matrix[sc_victim_index];
+    int sc_victim_imminence_order =
+        std::static_pointer_cast<SHEPHERDReplData>
+            (sc_victim->replacementData)
+                ->count_value_matrix[sc_victim_id];
 
     if (sc_victim_imminence_order == -1) {
         all_imminence_order_set = false;
@@ -246,12 +276,14 @@ SHEPHERD::getVictim(const ReplacementCandidates& candidates) const
     // return the victim SC block.
     ReplaceableEntry *mc_victim = nullptr;
     if (all_imminence_order_set) {
+        // std::cout << "<===== all imminence order set =====>\n";
         int max_imminence = sc_victim_imminence_order;
         int max_imminence_index = sc_victim_index;
-        for (int i = sc_assoc - 1; i < candidates.size(); i++) {
+        for (auto i: mc_way_indexes) {
             int immi = std::static_pointer_cast<SHEPHERDReplData>(
                 candidates[i]->replacementData)->
-                    count_value_matrix[sc_victim_index];
+                    count_value_matrix[sc_victim_id];
+            // std::cout << immi << " ";
             if (immi > max_imminence) {
                 max_imminence = immi;
                 max_imminence_index = i;
@@ -264,6 +296,7 @@ SHEPHERD::getVictim(const ReplacementCandidates& candidates) const
         if (max_imminence_index != sc_victim_index) {
             mc_victim = candidates[max_imminence_index];
         }
+
         // resetting of the victim SC will be handled later, before it
         // is returned. The case where the least imminent entry is
         // the victim SC block itself, we don't need to do any data
@@ -278,25 +311,46 @@ SHEPHERD::getVictim(const ReplacementCandidates& candidates) const
     }
 
     // If we found a suitable candidate in MC, do the necessary steps.
-    if (mc_victim) {
-        mc_victim->replacementData = sc_victim->replacementData;
-        // The victim SC block moved to MC should be the next candidate for
-        // replacement, so for LRU it should be least recently used. So we
-        // set the lastTouchTick to be 0.
+    if (mc_victim && mc_victim != sc_victim) {
+        // make SC as a MC
+        int sc_cache_id = std::static_pointer_cast<SHEPHERDReplData>(
+            sc_victim->replacementData)->shephard_cache_id;
+
+        // now the SC became a MC
         std::static_pointer_cast<SHEPHERDReplData>(
-            mc_victim->replacementData)->shepherd_cache_flag = false;
+            sc_victim->replacementData)->shepherd_cache_flag = false;
         std::static_pointer_cast<SHEPHERDReplData>(
-            mc_victim->replacementData)->tickInserted = 0;
+            sc_victim->replacementData)->tickInserted = 0;
         std::static_pointer_cast<SHEPHERDReplData>(
-            mc_victim->replacementData)->lastTouchTick = 0;
+            sc_victim->replacementData)->lastTouchTick = 0;
+        std::static_pointer_cast<SHEPHERDReplData>(
+            sc_victim->replacementData)->shephard_cache_id = -1;
+
+        // now make MC to a SC
+        std::static_pointer_cast<SHEPHERDReplData>(
+            mc_victim->replacementData)->shepherd_cache_flag = true;
+        // set SC cache id to it
+        std::static_pointer_cast<SHEPHERDReplData>(
+            mc_victim->replacementData)->shephard_cache_id = sc_cache_id;
+
+        sc_victim = mc_victim;
+
+        // The victim SC block moved to MC should be the next
+        // candidate for replacement, so for LRU it should be least
+        // recently used. So we set the lastTouchTick to be 0.
     }
 
+    sc_victim_repl_data = std::static_pointer_cast<SHEPHERDReplData>(
+        sc_victim->replacementData);
     // Reset the nvc to 0
-    sc_victim_repl_data->next_value_counter[sc_set][sc_victim_index] = 0;
+    sc_victim_repl_data->next_value_counter[sc_set][sc_victim_id] = 0;
+    sc_victim_repl_data->lastTouchTick = 0;
+    sc_victim_repl_data->tickInserted = 0;
     // We want to make this SC most imminent wrt to other SCs, so set
     // the count matrix value for other SCs to 0.
-    for (int i = 0; i < sc_assoc; i++) {
-        if (i == sc_victim_index)
+    for (int i = 0; i < sc_victim_repl_data
+            ->count_value_matrix.size(); i++) {
+        if (i == sc_victim_id)
             continue;
 
         sc_victim_repl_data->count_value_matrix[i] = 0;
@@ -305,7 +359,7 @@ SHEPHERD::getVictim(const ReplacementCandidates& candidates) const
     for (int i = 0; i < candidates.size(); i++) {
         std::static_pointer_cast<SHEPHERDReplData>(
             candidates[i]->replacementData)->
-                count_value_matrix[sc_victim_index] = -1;
+                count_value_matrix[sc_victim_id] = -1;
     }
 
     return sc_victim;

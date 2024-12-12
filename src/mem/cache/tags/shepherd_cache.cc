@@ -68,6 +68,7 @@ ShepherdSetAssoc::ShepherdSetAssoc(const Params &p)
     }
 
     std::cout << "<=== shepherd cache init ===>\n";
+    std::cout << "assoc: " << allocAssoc << "\n";
 }
 
 void
@@ -101,7 +102,8 @@ ShepherdSetAssoc::tagsInit()
         std::static_pointer_cast<
             gem5::replacement_policy::SHEPHERD::SHEPHERDReplData>
                 (blk->replacementData)->update_data(isShepherdCacheWay,
-                    shephard_cache_assoc, num_sets, blk->getSet());
+                    shephard_cache_assoc, num_sets,
+                        blk->getSet(), blk->getWay());
     }
 }
 

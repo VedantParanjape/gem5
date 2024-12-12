@@ -65,7 +65,7 @@ class L1_DCache(L1Cache):
     pass
 
 class L2Cache(Cache):
-    assoc = 8
+    assoc = 16
     tag_latency = 20
     data_latency = 20
     response_latency = 20
@@ -74,10 +74,10 @@ class L2Cache(Cache):
     write_buffers = 8
 
     # set the shepherd cache for L2 cache
-    tags = Param.BaseTags(ShepherdSetAssoc(), "Tag store")
-    replacement_policy = Param.BaseReplacementPolicy(
-        SHEPHERDRP(), "Replacement policy"
-    )
+    # tags = Param.BaseTags(ShepherdSetAssoc(), "Tag store")
+    # replacement_policy = Param.BaseReplacementPolicy(
+    #     SHEPHERDRP(), "Replacement policy"
+    # )
 
 class IOCache(Cache):
     assoc = 8
