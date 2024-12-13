@@ -89,7 +89,7 @@ ShepherdSetAssoc::tagsInit()
 
         // Associate a replacement data entry to the block
         // SC associativity = 4
-        int shephard_cache_assoc = getWayAllocationMax() / 4;
+        int shephard_cache_assoc = 12;
         if (shephard_cache_assoc == 0)
             shephard_cache_assoc = 1;
 
